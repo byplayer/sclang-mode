@@ -1,6 +1,6 @@
 sclang-mode
 ===========
-This is a fork of the official SuperCollider sclang-mode for emacs. I have not submitted a pull request and probably won't, since I am not terribly confident in my elisp-fu, nor have I really done a lot of testing on these changes to the [official one](https://github.com/supercollider/supercollider/tree/master/editors/scel/el). Hopefully people who use emacs to write SC will find this and find it useful, though.
+This is a fork of [the official SuperCollider sclang-mode for emacs](https://github.com/supercollider/supercollider/tree/master/editors/scel/el). I have not submitted a pull request and probably won't, since I am not terribly confident in my elisp-fu, nor have I really done a lot of testing on these changes to the official one. Hopefully people who use emacs to write SC will find this and find it useful, though.
 
 If you have any problems with the changes I've made, feel free to submit an issue report. For the most part, however, this should work as a drop-in replacement for the sclang-mode that ships with SC.
 
