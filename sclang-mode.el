@@ -246,20 +246,19 @@
          'font-lock-comment-face)))
 
 (defun sclang-font-lock-class-keyword-matcher (limit)
-  (let ((regexp (or sclang-font-lock-class-keywords
-                    (concat "\\<" sclang-class-name-regexp "\\>")))
+  (let ((regexp (concat "\\<" sclang-class-name-regexp "\\>"))
         (case-fold-search nil)
         (found nil)
         (res nil))
     (while (not found)
       (setq res (re-search-forward regexp limit t))
       (let ((thing (thing-at-point 'word)))
-        (if (not (null thing))
-        (when (or
-               (eq sclang-list-of-classes nil) ;; if we don't yet have the class list, just highlight all capitalized words
-               (position (substring-no-properties thing) sclang-list-of-classes :test 'equal))
-          (setq found t))
-        (setq found t))))
+        (if (or (null thing) (null res))
+            (setq found t) ;; exit the loop if the thing-at-point is nil or if the re-search-forward returned nil.
+            (when (or
+                   (null sclang-list-of-classes) ;; if we don't yet have the class list, just highlight all capitalized words
+                   (position (substring-no-properties thing) sclang-list-of-classes :test 'equal))
+              (setq found t)))))
     res))
 
 (defun sclang-set-font-lock-keywords ()
