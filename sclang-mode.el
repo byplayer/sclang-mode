@@ -253,13 +253,13 @@
         (res nil))
     (while (not found)
       (setq res (re-search-forward regexp limit t))
-      (let ((thing (substring-no-properties (thing-at-point 'word))))
+      (let ((thing (thing-at-point 'word)))
+        (if (not (null thing))
         (when (or
                (eq sclang-list-of-classes nil) ;; if we don't yet have the class list, just highlight all capitalized words
-               (position thing sclang-list-of-classes :test 'equal))
+               (position (substring-no-properties thing) sclang-list-of-classes :test 'equal))
           (setq found t))
-        (when (eq res nil) ;; avoid infinitely looping
-          (setq found t))))
+        (setq found t))))
     res))
 
 (defun sclang-set-font-lock-keywords ()
