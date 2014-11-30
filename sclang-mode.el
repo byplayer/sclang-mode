@@ -208,9 +208,7 @@
     )
   "*List of methods signalling errors or warnings.")
 
-(defvar sclang-font-lock-class-keywords (concat "\\<" sclang-class-name-regexp "\\>"))
-
-(defvar sclang-list-of-classes nil)
+(defvar sclang-font-lock-class-keywords nil)
 
 (defvar sclang-font-lock-keywords-1 nil
   "Subdued level highlighting for SCLang mode.")
@@ -225,40 +223,40 @@
   "Default expressions to highlight in SCLang mode.")
 
 (defconst sclang-font-lock-defaults '((sclang-font-lock-keywords
-                                       sclang-font-lock-keywords-1
-                                       sclang-font-lock-keywords-2
-                                       sclang-font-lock-keywords-3
-                                       )
-                                      nil nil
-                                      nil
-                                      beginning-of-defun
-                                      ))
+				       sclang-font-lock-keywords-1
+				       sclang-font-lock-keywords-2
+				       sclang-font-lock-keywords-3
+				       )
+				      nil nil
+				      nil
+				      beginning-of-defun
+				      ))
 
 (defun sclang-font-lock-syntactic-face (state)
   (cond ((eq (nth 3 state) ?')
-         ;; symbol
-         'font-lock-constant-face)
-        ((nth 3 state)
-         ;; string
-         'font-lock-string-face)
-        ((nth 4 state)
-         ;; comment
-         'font-lock-comment-face)))
+	 ;; symbol
+	 'font-lock-constant-face)
+	((nth 3 state)
+	 ;; string
+	 'font-lock-string-face)
+	((nth 4 state)
+	 ;; comment
+	 'font-lock-comment-face)))
 
 (defun sclang-font-lock-class-keyword-matcher (limit)
   (let ((regexp (concat "\\<" sclang-class-name-regexp "\\>"))
         (case-fold-search nil)
-        (found nil)
+        (continue t)
         (res nil))
-    (while (not found)
+    (while continue
       (setq res (re-search-forward regexp limit t))
-      (let ((thing (thing-at-point 'word)))
-        (if (or (null thing) (null res))
-            (setq found t) ;; exit the loop if the thing-at-point is nil or if the re-search-forward returned nil.
-            (when (or
-                   (null sclang-list-of-classes) ;; if we don't yet have the class list, just highlight all capitalized words
-                   (position (substring-no-properties thing) sclang-list-of-classes :test 'equal))
-              (setq found t)))))
+      (if (or (null res) (null sclang-class-list))
+          (setq continue nil)
+        (let ((thing (thing-at-point 'word)))
+          (if (null thing)
+              (setq res nil continue nil)
+            (when (position (substring-no-properties thing) sclang-class-list :test 'equal)
+              (setq continue nil))))))
     res))
 
 (defun sclang-set-font-lock-keywords ()
@@ -268,16 +266,16 @@
    (list
     ;; keywords
     (cons (regexp-opt sclang-font-lock-keyword-list'words)
-	  'font-lock-keyword-face)
+          'font-lock-keyword-face)
     ;; builtins
     (cons (regexp-opt sclang-font-lock-builtin-list 'words)
-	  'font-lock-builtin-face)
+          'font-lock-builtin-face)
     ;; pi is a special case
     (cons "\\<\\([0-9]+\\(\\.\\)\\)pi\\>" 'font-lock-builtin-face)
     ;; constants
     (cons "\\s/\\s\\?." 'font-lock-constant-face) ; characters
     (cons (concat "\\\\\\(" sclang-symbol-regexp "\\)")
-	  'font-lock-constant-face)	; symbols
+          'font-lock-constant-face)	; symbols
     )
    ;; level 2
    sclang-font-lock-keywords-2
@@ -286,18 +284,18 @@
     (list
      ;; variables
      (cons (concat "\\s'\\(" sclang-identifier-regexp "\\)")
-	   'font-lock-variable-name-face) ; environment variables
+           'font-lock-variable-name-face) ; environment variables
      (cons (concat "\\<\\(" sclang-identifier-regexp "\\)\\>:")	; keyword arguments
-	   'font-lock-variable-name-face)
+           'font-lock-variable-name-face)
      ;; method definitions
      (cons sclang-method-definition-regexp
-	   (list 1 'font-lock-function-name-face))
+           (list 1 'font-lock-function-name-face))
      ;; methods
      (cons (regexp-opt sclang-font-lock-method-list 'words)
-	   'font-lock-function-name-face)
+           'font-lock-function-name-face)
      ;; errors
      (cons (regexp-opt sclang-font-lock-error-list 'words)
-	   'font-lock-warning-face)
+           'font-lock-warning-face)
      ))
    ;; level 3
    sclang-font-lock-keywords-3
@@ -306,7 +304,7 @@
     (list
      ;; classes
      (cons 'sclang-font-lock-class-keyword-matcher 'font-lock-type-face)
-;;      (cons (concat "\\<" sclang-class-name-regexp "\\>") 'font-lock-type-face)
+     ;;      (cons (concat "\\<" sclang-class-name-regexp "\\>") 'font-lock-type-face)
      ))
    ;; default level
    sclang-font-lock-keywords sclang-font-lock-keywords-1
@@ -314,22 +312,17 @@
 
 (defun sclang-update-font-lock ()
   "Update font-lock information in all sclang-mode buffers."
-  ;; (setq sclang-font-lock-class-keywords
-  (and sclang-symbol-table
-       (let* ((list (remove-if
-                     (lambda (x) (or (not (sclang-class-name-p x))
-                                     (sclang-string-match "^Meta_" x)))
-                     sclang-symbol-table))
-              ;; need to set this for large numbers of classes
-              (max-specpdl-size (* (length list) 2)))
-         (mapcar (lambda (class)
-                   (font-lock-add-keywords 'sclang-mode
-                                           '((class . font-lock-type-face))))
-                 list)
-         (setq sclang-list-of-classes list)
-         (condition-case nil
-             (concat "\\<\\(?:Meta_\\)?\\(?:" (regexp-opt list) "\\)\\>")
-           (error nil))));;)
+ ;;  (setq sclang-font-lock-class-keywords
+	;; (and sclang-symbol-table
+	;;      (let* ((list (remove-if
+	;; 		   (lambda (x) (or (not (sclang-class-name-p x))
+	;; 				   (sclang-string-match "^Meta_" x)))
+	;; 		   sclang-symbol-table))
+	;; 	    ;; need to set this for large numbers of classes
+	;; 	    (max-specpdl-size (* (length list) 2)))
+	;;        (condition-case nil
+	;; 	   (concat "\\<\\(?:Meta_\\)?\\(?:" (regexp-opt list) "\\)\\>")
+	;; 	 (error nil)))))
   ;; too expensive
   ;;   (dolist (buffer (buffer-list))
   ;;     (with-current-buffer buffer
