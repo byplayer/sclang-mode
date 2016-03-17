@@ -602,41 +602,41 @@ are considered."
  'methodReferences
  (lambda (assoc)
    (let ((name (car assoc))
-	 (data (cdr assoc)))
+         (data (cdr assoc)))
      (if data
-	 (sclang-browse-definitions
-	  name data
-	  "*References*" (format "References to '%s'\n" name)
-	  (lambda (name)
-	    (let ((case-fold-search nil))
-	      (when (re-search-forward (regexp-quote name))
-		(match-beginning 0)))))
+         (sclang-browse-definitions
+          name data
+          "*References*" (format "References to '%s'\n" name)
+          (lambda (name)
+            (let ((case-fold-search nil))
+              (when (re-search-forward (regexp-quote name))
+                (match-beginning 0)))))
        (sclang-message "No references to '%s'" name)))))
 
 (defun sclang-show-method-args ()
   "whooha. in full effect."
   (interactive)
   (let ((regexp (concat
-		 sclang-class-name-regexp
-		 "[ \t\n]*\\(?:\\.[ \t\n]*\\("
-		 sclang-method-name-regexp
-		 "\\)\\)?[ \t\n]*("))
-	(case-fold-search nil)
-	(beg (point)))
+                 sclang-class-name-regexp
+                 "[ \t\n]*\\(?:\\.[ \t\n]*\\("
+                 sclang-method-name-regexp
+                 "\\)\\)?[ \t\n]*("))
+        (case-fold-search nil)
+        (beg (point)))
     (save-excursion
       (while (and (re-search-backward regexp nil t)
-		  (let ((class (save-match-data (sclang-get-symbol (sclang-symbol-at-point)))))
-		    (goto-char (1- (match-end 0)))
-		    (if (condition-case nil
-			    (save-excursion
-			      (forward-list 1)
-			      (> (point) beg))
-			  (error t))
-			(let ((method (sclang-get-symbol (or (match-string-no-properties 1) "new"))))
-			  (and class method
-			       (sclang-perform-command 'methodArgs class method)
-			       nil))
-		      (goto-char (match-beginning 0)) t)))))))
+                  (let ((class (save-match-data (sclang-get-symbol (sclang-symbol-at-point)))))
+                    (goto-char (1- (match-end 0)))
+                    (if (condition-case nil
+                            (save-excursion
+                              (forward-list 1)
+                              (> (point) beg))
+                          (error t))
+                        (let ((method (sclang-get-symbol (or (match-string-no-properties 1) "new"))))
+                          (and class method
+                               (sclang-perform-command 'methodArgs class method)
+                               nil))
+                      (goto-char (match-beginning 0)) t)))))))
 
 (sclang-set-command-handler
  'methodArgs
